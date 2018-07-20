@@ -1,0 +1,23 @@
+{
+  "name": "lockscreen-catcher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build/server.js",
+  "scripts": {
+    "server": "node ./build/server.js",
+    "tsc": "tsc",
+    "tsc-watch": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "P",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.3",
+    "pug": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.16.0",
+    "tslint": "^5.11.0",
+    "typescript": "^2.9.2"
+  }
+}
