@@ -2,8 +2,10 @@
 import { Router, Request, Response } from 'express';
 import { readdirSync, copyFileSync, mkdirSync, existsSync } from 'fs';
 import { sync } from 'read-chunk';
-import FileType from 'file-type';
+import fileType from 'file-type';
 import { FileTypeResult } from 'file-type'
+import sizeOf from 'image-size'
+import JsonDB from 'node-json-db'
 
 // Assign router to the express.Router() instance
 const router: Router = Router();
@@ -12,18 +14,25 @@ const router: Router = Router();
 export class WelcomeController {
     private router: Router
     private imagesPath: string = process.env.LocalAppData + "\\Packages\\Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy\\LocalState\\Assets"
+    private db: JsonDB;
 
     constructor() {
         this.router = Router();
+        this.db = new JsonDB('knownImages.json', true, true);
+        let root:object=this.db.getData('/');
+        if(!root.hasOwnProperty('knownFile')){
+            this.db.push('/',{knownFile:[]})
+        }
         this.init();
     }
 
-    init() {
+    private init() {
         this.prepareUploadsDir();
 
         this.router.get('/', this.getHelloWorld)
         this.router.get('/scan', this.getScan)
         this.router.get('/:name', this.getName)
+
     }
 
     private prepareUploadsDir(): void {
@@ -41,23 +50,34 @@ export class WelcomeController {
     };
 
     public getScan = (req: Request, res: Response): void => {
-
-
-        let files: string[] = readdirSync(this.imagesPath);
-
-
-        let fileEntrys: FileEntry[] = files.map((file) => {
-
-            return new FileEntry(file, this.imagesPath, '/upload');
-        })
-        fileEntrys.forEach((fileEntry) => {
-
-            copyFileSync(fileEntry.inputPath, "." + fileEntry.uploadedPath)
+        let knownFiles: String[]=this.db.getData('/knownFile');
+    
+        let files: string[] = readdirSync(this.imagesPath).filter((fileName) => {
+            return !knownFiles.includes(fileName);
         });
 
+        files.forEach((fileName)=>{
+            this.db.push('/knownFile[]',fileName);
+        })
 
-        let fileList: string[] = fileEntrys.map((file) => { return file.uploadedPath });
-        res.render('scan', { message: 'Scan result: ', fileList: fileList })
+
+        let fileEntrys: FileEntry[] = files
+            .map((file) => {
+                return new FileEntry(file, this.imagesPath, '/upload');
+            }).filter((entry) => {
+                let size: any = sizeOf(entry.inputPath);
+                return size.width >= 1280 && size.height >= 720;
+            })
+
+        let fileList: string[] = [];
+
+        fileEntrys.forEach((fileEntry) => {
+            fileEntry.detectAndAddExtension();
+            copyFileSync(fileEntry.inputPath, "." + fileEntry.uploadedPath)
+            fileList.push(fileEntry.uploadedPath);
+        });
+
+        res.render('scan', { message: 'New Images: ', fileList: fileList })
     }
 
     private getName(req: Request, res: Response): void {
@@ -77,8 +97,13 @@ class FileEntry {
     constructor(fileName: string, inputPath: string, uploadedPath: string) {
         this.fileName = fileName;
         this.inputPath = inputPath + "\\" + fileName;
+
+        this.uploadedPath = uploadedPath + "\\" + fileName;
+    }
+
+    public detectAndAddExtension = (): void => {
         let buffer: Buffer = sync(this.inputPath, 0, 4100);
-        let type: FileTypeResult = FileType(buffer);
-        this.uploadedPath = uploadedPath + "\\" + fileName + "." + type.ext;
+        let type: FileTypeResult = fileType(buffer);
+        this.uploadedPath += "." + type.ext
     }
 }

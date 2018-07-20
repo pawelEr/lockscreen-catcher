@@ -12,14 +12,18 @@
   "author": "P",
   "license": "ISC",
   "dependencies": {
+    "@types/node-json-db": "^0.0.1",
     "express": "^4.16.3",
     "file-type": "^8.1.0",
+    "image-size": "^0.6.3",
+    "node-json-db": "^0.7.5",
     "pug": "^2.0.3",
     "read-chunk": "^2.1.0"
   },
   "devDependencies": {
     "@types/express": "^4.16.0",
     "@types/file-type": "^5.2.1",
+    "@types/image-size": "^0.0.29",
     "@types/read-chunk": "^2.1.0",
     "tslint": "^5.11.0",
     "typescript": "^2.9.2"

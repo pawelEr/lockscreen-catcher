@@ -3,5 +3,9 @@ html
         
     body
         p= message
-        each val in fileList
-            img(src=val)
+        if fileList.length>0
+            each val in fileList
+                div(width="150px", height="150px")
+                    img(src=val)
+        else
+            p= 'No new images'
