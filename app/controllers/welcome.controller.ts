@@ -46,7 +46,7 @@ export class WelcomeController {
 
     private getHelloWorld(req: Request, res: Response): void {
         // Reply with a hello world when no name param is provided
-        res.send('Hello, World!');
+        res.render('welcome');
     };
 
     public getScan = (req: Request, res: Response): void => {
