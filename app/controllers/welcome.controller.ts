@@ -5,9 +5,6 @@ import sizeOf from 'image-size'
 import JsonDB from 'node-json-db'
 import { FileEntry } from '../models/file-entry.model';
 
-// Assign router to the express.Router() instance
-const router: Router = Router();
-
 export class WelcomeController {
     private router: Router = Router();
     private imagesPath: string = process.env.LocalAppData + "\\Packages\\Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy\\LocalState\\Assets"
@@ -33,6 +30,7 @@ export class WelcomeController {
         this.router.get('/', this.getHelloWorld)
         this.router.get('/scan', this.getScan)
         this.router.get('/:name', this.getName)
+        this.router.get('/download/:file', this.getFile)
     }
 
     private prepareUploadsDir(): void {
@@ -45,11 +43,28 @@ export class WelcomeController {
     }
 
     private getHelloWorld = (req: Request, res: Response): void => {
-        let fileList: string[]=this.db.getData('/cachedImage');
+        let fileList: string[] = this.db.getData('/cachedImage')
+            .map((filePath: string)=>{
+                return {imgPath:filePath, downloadLink: '/welcome/download/'+filePath.split("\\").pop()}
+            });
 
-        res.render('welcome', {fileList: fileList});
+        res.render('welcome', { fileList: fileList });
 
     };
+
+    public getFile = (req: Request, res: Response): void => {
+        let fileParam: string = req.params.file;
+        if (fileParam) {
+            let filePath: string = 'upload/' + fileParam;
+            if (existsSync(filePath)) {
+                res.download(filePath)
+            } else {
+                res.sendStatus(404);
+            }
+        } else {
+            res.sendStatus(400);
+        }
+    }
 
     public getScan = (req: Request, res: Response): void => {
         let knownFiles: String[] = this.db.getData('/knownFile');
@@ -70,13 +85,13 @@ export class WelcomeController {
                 return size.width >= 1280 && size.height >= 720;
             })
 
-        let fileList: string[] = [];
+        let fileList: any[] = [];
 
         fileEntrys.forEach((fileEntry) => {
             fileEntry.detectAndAddExtension();
             copyFileSync(fileEntry.inputPath, "." + fileEntry.uploadedPath)
-            fileList.push(fileEntry.uploadedPath);
-            this.db.push('/cachedImage[]',fileEntry.uploadedPath)
+            fileList.push({ imgPath: fileEntry.uploadedPath, downloadLink: '/download/' + fileEntry.fileName });
+            this.db.push('/cachedImage[]', fileEntry.uploadedPath)
         });
 
         res.render('scan', { fileList: fileList })

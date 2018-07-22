@@ -2,17 +2,17 @@ html
     head
         link(rel="stylesheet", href="/static/style.css")
     body
-        div(class='root-container')
-            h1= 'Lockscreen catcher'
-            a(href="/welcome")= '<< Back'
-            h2= 'Scan result:'
+        div(class="root-container")
+            h1= "Lockscreen catcher"
+            a(href="/welcome")= "<< Back"
+            h2= "Scan result:"
             if fileList.length>0
                 div(class="img-root-container")
                     each val in fileList
                         div(class="img-container")
-                            img(src=val, class="img")
+                            img(src=val.imgPath, class="img")
+                            div(class="overlay")
+                                a(href=val.downloadLink)
+                                    img(src='/static/download.png')
             else
-                p= 'No new images'
-
-            br
-            
+                p= "No new images"
