@@ -15,6 +15,7 @@ app.use('/welcome', welcomeController.getRouter());
 app.use('/', HomeController);
 
 app.use('/upload', express.static('upload'))
+app.use('/static', express.static('static'))
 
 // Serve the application at the given port
 app.listen(port, () => {

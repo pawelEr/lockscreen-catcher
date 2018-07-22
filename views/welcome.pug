@@ -1,7 +1,14 @@
 html
     head
-
+        link(rel="stylesheet", href="/static/style.css")
     body
-        a(href="welcome/scan")= 'Scan for new images'
-        br
-        
+        div(class='root-container')
+            h1= 'Lockscreen catcher'
+            a(href="welcome/scan")= 'Scan for new images'
+            if fileList.length>0
+                div(class="img-root-container")
+                    each val in fileList
+                        div(class="img-container")
+                            img(src=val, class="img")
+            else
+                p= 'No cached images'

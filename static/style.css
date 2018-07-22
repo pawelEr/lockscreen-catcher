@@ -1,0 +1,31 @@
+html {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.root-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.img-root-container {
+    margin:0px;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    flex-grow: 1;
+}
+
+.img-container {
+    max-width: 300px;
+    max-height: 300px;
+
+    padding: 10px;
+}
+
+.img {
+    max-width: 100%;
+    max-height: 100%;
+}

@@ -1,14 +1,18 @@
 html
     head
-        
+        link(rel="stylesheet", href="/static/style.css")
     body
-        p= message
-        if fileList.length>0
-            each val in fileList
-                div(width="150px", height="150px")
-                    img(src=val)
-        else
-            p= 'No new images'
+        div(class='root-container')
+            h1= 'Lockscreen catcher'
+            a(href="/welcome")= '<< Back'
+            h2= 'Scan result:'
+            if fileList.length>0
+                div(class="img-root-container")
+                    each val in fileList
+                        div(class="img-container")
+                            img(src=val, class="img")
+            else
+                p= 'No new images'
 
-        br
-        a(href="/welcome")= 'Back'
+            br
+            

@@ -1,38 +1,38 @@
 // Import only what we need from express
 import { Router, Request, Response } from 'express';
 import { readdirSync, copyFileSync, mkdirSync, existsSync } from 'fs';
-import { sync } from 'read-chunk';
-import fileType from 'file-type';
-import { FileTypeResult } from 'file-type'
 import sizeOf from 'image-size'
 import JsonDB from 'node-json-db'
+import { FileEntry } from '../models/file-entry.model';
 
 // Assign router to the express.Router() instance
 const router: Router = Router();
 
-
 export class WelcomeController {
-    private router: Router
+    private router: Router = Router();
     private imagesPath: string = process.env.LocalAppData + "\\Packages\\Microsoft.Windows.ContentDeliveryManager_cw5n1h2txyewy\\LocalState\\Assets"
-    private db: JsonDB;
+    private db: JsonDB = new JsonDB('knownImages.json', true, true);
 
     constructor() {
-        this.router = Router();
-        this.db = new JsonDB('knownImages.json', true, true);
-        let root:object=this.db.getData('/');
-        if(!root.hasOwnProperty('knownFile')){
-            this.db.push('/',{knownFile:[]})
-        }
-        this.init();
+        this.prepareUploadsDir();
+        this.prepareDb();
+        this.initRoutes();
     }
 
-    private init() {
-        this.prepareUploadsDir();
+    private prepareDb(): void {
+        let root: object = this.db.getData('/');
 
+        if (!root.hasOwnProperty('knownFile'))
+            this.db.push('/knownFile', [])
+
+        if (!root.hasOwnProperty('cachedImage'))
+            this.db.push('/cachedImage', [])
+    }
+
+    private initRoutes(): void {
         this.router.get('/', this.getHelloWorld)
         this.router.get('/scan', this.getScan)
         this.router.get('/:name', this.getName)
-
     }
 
     private prepareUploadsDir(): void {
@@ -44,22 +44,23 @@ export class WelcomeController {
         return this.router;
     }
 
-    private getHelloWorld(req: Request, res: Response): void {
-        // Reply with a hello world when no name param is provided
-        res.render('welcome');
+    private getHelloWorld = (req: Request, res: Response): void => {
+        let fileList: string[]=this.db.getData('/cachedImage');
+
+        res.render('welcome', {fileList: fileList});
+
     };
 
     public getScan = (req: Request, res: Response): void => {
-        let knownFiles: String[]=this.db.getData('/knownFile');
-    
+        let knownFiles: String[] = this.db.getData('/knownFile');
+
         let files: string[] = readdirSync(this.imagesPath).filter((fileName) => {
             return !knownFiles.includes(fileName);
         });
 
-        files.forEach((fileName)=>{
-            this.db.push('/knownFile[]',fileName);
+        files.forEach((fileName) => {
+            this.db.push('/knownFile[]', fileName);
         })
-
 
         let fileEntrys: FileEntry[] = files
             .map((file) => {
@@ -75,9 +76,10 @@ export class WelcomeController {
             fileEntry.detectAndAddExtension();
             copyFileSync(fileEntry.inputPath, "." + fileEntry.uploadedPath)
             fileList.push(fileEntry.uploadedPath);
+            this.db.push('/cachedImage[]',fileEntry.uploadedPath)
         });
 
-        res.render('scan', { message: 'New Images: ', fileList: fileList })
+        res.render('scan', { fileList: fileList })
     }
 
     private getName(req: Request, res: Response): void {
@@ -86,24 +88,5 @@ export class WelcomeController {
 
         // Greet the given name
         res.send(`Hello, ${name}`);
-    }
-}
-
-class FileEntry {
-    fileName: string;
-    inputPath: string;
-    uploadedPath: string;
-
-    constructor(fileName: string, inputPath: string, uploadedPath: string) {
-        this.fileName = fileName;
-        this.inputPath = inputPath + "\\" + fileName;
-
-        this.uploadedPath = uploadedPath + "\\" + fileName;
-    }
-
-    public detectAndAddExtension = (): void => {
-        let buffer: Buffer = sync(this.inputPath, 0, 4100);
-        let type: FileTypeResult = fileType(buffer);
-        this.uploadedPath += "." + type.ext
     }
 }
