@@ -1,6 +1,3 @@
-import { sync } from 'read-chunk';
-import fileType from 'file-type';
-import { FileTypeResult } from 'file-type'
 
 export class FileEntry {
     fileName: string;
@@ -13,10 +10,10 @@ export class FileEntry {
         this.uploadedPath = uploadedPath + "\\" + fileName;
     }
 
-    //TODO: push it to some service
-    public detectAndAddExtension = (): void => {
-        let buffer: Buffer = sync(this.inputPath, 0, 4100);
-        let type: FileTypeResult = fileType(buffer);
-        this.uploadedPath += "." + type.ext
+    /**
+     * addExtension
+     */
+    public addExtension = (extension: string): void => {
+        this.uploadedPath += "." + extension;
     }
 }

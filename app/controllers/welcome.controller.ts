@@ -4,6 +4,7 @@ import { readdirSync, copyFileSync, mkdirSync, existsSync } from 'fs';
 import sizeOf from 'image-size'
 import JsonDB from 'node-json-db'
 import { FileEntry } from '../models/file-entry.model';
+import { fileTypeService } from '../services/file-type.service';
 
 export class WelcomeController {
     private router: Router = Router();
@@ -80,6 +81,8 @@ export class WelcomeController {
         let fileEntrys: FileEntry[] = files
             .map((file) => {
                 return new FileEntry(file, this.imagesPath, '/upload');
+            }).filter((entry)=>{
+                return fileTypeService.detectIsImage(entry.inputPath)
             }).filter((entry) => {
                 let size: any = sizeOf(entry.inputPath);
                 return size.width >= 1280 && size.height >= 720;
@@ -88,7 +91,7 @@ export class WelcomeController {
         let fileList: any[] = [];
 
         fileEntrys.forEach((fileEntry) => {
-            fileEntry.detectAndAddExtension();
+            fileEntry.addExtension(fileTypeService.detectExtension(fileEntry.inputPath));
             copyFileSync(fileEntry.inputPath, "." + fileEntry.uploadedPath)
             fileList.push({ imgPath: fileEntry.uploadedPath, downloadLink: '/download/' + fileEntry.fileName });
             this.db.push('/cachedImage[]', fileEntry.uploadedPath)
